@@ -1,0 +1,21 @@
+### VisualStudioCode ###
+.vscode/*
+.vscode/**
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+
+### JupyterNotebook Files ###
+.ipynb_checkpoints
+
+### BlueJ Files ###
+.bluej
+.ctxt
+
+### Mac OS Files ###
+.DS_Store
