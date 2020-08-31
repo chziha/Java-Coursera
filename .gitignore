@@ -14,8 +14,8 @@
 .ipynb_checkpoints
 
 ### BlueJ Files ###
-.bluej
-.ctxt
+**/*.bluej
+**/*.ctxt
 
 ### Mac OS Files ###
-.DS_Store
+**/.DS_Store
