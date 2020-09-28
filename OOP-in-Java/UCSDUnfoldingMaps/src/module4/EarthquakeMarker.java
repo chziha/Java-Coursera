@@ -12,19 +12,11 @@ import processing.core.PGraphics;
  */
 public abstract class EarthquakeMarker extends SimplePointMarker
 {
-	
 	// Did the earthquake occur on land?  This will be set by the subclasses.
 	protected boolean isOnLand;
 
-	// SimplePointMarker has a field "radius" which is inherited
-	// by Earthquake marker:
-	// protected float radius;
-	//
-	// You will want to set this in the constructor, either
-	// using the thresholds below, or a continuous function
-	// based on magnitude. 
-  
-	
+	// SimplePointMarker has a field "radius" which is inherited by Earthquake marker:
+	// protected float radius
 	
 	/** Greater than or equal to this threshold is a moderate earthquake */
 	public static final float THRESHOLD_MODERATE = 5;
@@ -36,12 +28,18 @@ public abstract class EarthquakeMarker extends SimplePointMarker
 	/** Greater than or equal to this threshold is a deep depth */
 	public static final float THRESHOLD_DEEP = 300;
 
-	// ADD constants for colors
-
-	
 	// abstract method implemented in derived classes
 	public abstract void drawEarthquake(PGraphics pg, float x, float y);
-		
+	
+	// Method to draw cross on earthquakes occurred in the past day
+	public void drawPastDay(PGraphics pg, float x, float y) {
+		float r = this.radius;
+		if (this.getProperty("age").equals("Past Day")) {
+			pg.fill(0, 0, 0);
+			pg.line(x - r, y - r, x + r, y + r);
+			pg.line(x - r, y + r, x + r, y - r);
+		}
+	};
 	
 	// constructor
 	public EarthquakeMarker (PointFeature feature) 
@@ -55,39 +53,33 @@ public abstract class EarthquakeMarker extends SimplePointMarker
 		this.radius = 1.75f*getMagnitude();
 	}
 	
-
 	// calls abstract method drawEarthquake and then checks age and draws X if needed
 	public void draw(PGraphics pg, float x, float y) {
 		// save previous styling
 		pg.pushStyle();
-			
 		// determine color of marker from depth
 		colorDetermine(pg);
-		
 		// call abstract method implemented in child class to draw marker shape
 		drawEarthquake(pg, x, y);
-		
-		// OPTIONAL TODO: draw X over marker if within past day		
-		
+		// OPTIONAL TODO: draw X over marker if within past day
+		drawPastDay(pg, x, y);
 		// reset to previous styling
 		pg.popStyle();
-		
 	}
 	
-	// determine color of marker from depth, and set pg's fill color 
-	// using the pg.fill method.
-	// We suggest: Deep = red, intermediate = blue, shallow = yellow
-	// But this is up to you, of course.
-	// You might find the getters below helpful.
 	private void colorDetermine(PGraphics pg) {
 		//TODO: Implement this method
+		float depth = getDepth();
+		if (depth <= THRESHOLD_INTERMEDIATE) {
+			pg.fill(255, 255, 0);
+		} else if (depth > THRESHOLD_DEEP) {
+			pg.fill(255, 0, 0);
+		} else {
+			pg.fill(0, 0, 255);
+		}
 	}
 	
-	
-	/*
-	 * getters for earthquake properties
-	 */
-	
+	// Getters for earthquake properties
 	public float getMagnitude() {
 		return Float.parseFloat(getProperty("magnitude").toString());
 	}
@@ -109,6 +101,4 @@ public abstract class EarthquakeMarker extends SimplePointMarker
 	{
 		return isOnLand;
 	}
-	
-	
 }
