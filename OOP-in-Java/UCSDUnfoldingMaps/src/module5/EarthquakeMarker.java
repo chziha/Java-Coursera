@@ -83,7 +83,6 @@ public abstract class EarthquakeMarker extends CommonMarker
 					y-(radius+buffer));
 			
 		}
-		
 		// reset to previous styling
 		pg.popStyle();
 		
@@ -91,13 +90,21 @@ public abstract class EarthquakeMarker extends CommonMarker
 
 	/** Show the title of the earthquake if this marker is selected */
 	@Override
-	public void showTitle(PGraphics pg, float x, float y)
-	{
+	public void showTitle(PGraphics pg, float x, float y) {
 		// TODO: Implement this method
-		
+		if (this.isSelected()) {
+			pg.pushStyle();
+			pg.fill(255, 255, 255);
+			pg.textSize(10);
+			String title = this.getTitle();
+			float width = pg.textWidth("Title: " + title);
+			pg.rect(x + 10, y - 10, width + 10, 20);
+			pg.fill(0, 0, 0);
+			pg.text("Title: " + title, x + 13, y);
+			pg.popStyle();
+		}
 	}
 
-	
 	/**
 	 * Return the "threat circle" radius, or distance up to 
 	 * which this earthquake can affect things, for this earthquake.   
@@ -127,7 +134,6 @@ public abstract class EarthquakeMarker extends CommonMarker
 		}
 	}
 	
-	
 	/*
 	 * getters for earthquake properties
 	 */
@@ -153,8 +159,4 @@ public abstract class EarthquakeMarker extends CommonMarker
 	{
 		return isOnLand;
 	}
-	
-
-	
-	
 }

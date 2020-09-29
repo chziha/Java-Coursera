@@ -16,7 +16,7 @@ import processing.core.PGraphics;
 // TODO: Change SimplePointMarker to CommonMarker as the very first thing you do 
 // in module 5 (i.e. CityMarker extends CommonMarker).  It will cause an error.
 // That's what's expected.
-public class CityMarker extends SimplePointMarker {
+public class CityMarker extends CommonMarker {
 	
 	public static int TRI_SIZE = 5;  // The size of the triangle marker
 	
@@ -24,40 +24,47 @@ public class CityMarker extends SimplePointMarker {
 		super(location);
 	}
 	
-	
 	public CityMarker(Feature city) {
 		super(((PointFeature)city).getLocation(), city.getProperties());
 		// Cities have properties: "name" (city name), "country" (country name)
 		// and "population" (population, in millions)
 	}
 
-	
 	/**
 	 * Implementation of method to draw marker on the map.
 	 */
-	public void draw(PGraphics pg, float x, float y) {
+	public void drawMarker(PGraphics pg, float x, float y) {
 		// Save previous drawing style
 		pg.pushStyle();
 		
 		// IMPLEMENT: drawing triangle for each city
 		pg.fill(150, 30, 30);
-		pg.triangle(x, y-TRI_SIZE, x-TRI_SIZE, y+TRI_SIZE, x+TRI_SIZE, y+TRI_SIZE);
+		pg.	triangle(x - TRI_SIZE / 2 * (float) Math.sqrt(3), y + TRI_SIZE / 2, 
+				x + TRI_SIZE / 2 * (float) Math.sqrt(3), y + TRI_SIZE / 2, 
+				x, y - TRI_SIZE);
 		
 		// Restore previous drawing style
 		pg.popStyle();
 	}
 	
-	/** Show the title of the city if this marker is selected */
+	// Show the title of the city if it is selected
 	public void showTitle(PGraphics pg, float x, float y)
 	{
-		
 		// TODO: Implement this method
+		if (this.isSelected()) {
+			pg.pushStyle();
+			pg.fill(255, 255, 255);
+			pg.rect(x + 10, y - 25, 120, 45);
+			pg.fill(0, 0, 0);
+			pg.textSize(10);
+			pg.text("Name: " + this.getCity(), x + 13, y - 15);
+			pg.text("Country: " + this.getCountry(), x + 13, y);
+			pg.text("Population: "+ this.getPopulation(), x + 13, y + 15);
+			pg.popStyle();
+		}
 	}
 	
-	
-	
-	/* Local getters for some city properties.  
-	 */
+	// Local getters for some city properties.  
 	public String getCity()
 	{
 		return getStringProperty("name");

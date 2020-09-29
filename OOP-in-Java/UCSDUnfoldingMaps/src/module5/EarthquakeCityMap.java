@@ -12,8 +12,10 @@ import de.fhpotsdam.unfolding.marker.AbstractShapeMarker;
 import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MultiMarker;
 import de.fhpotsdam.unfolding.providers.Google;
+import de.fhpotsdam.unfolding.providers.Microsoft;
 import de.fhpotsdam.unfolding.providers.MBTilesMapProvider;
 import de.fhpotsdam.unfolding.utils.MapUtils;
+import de.fhpotsdam.unfolding.utils.ScreenPosition;
 import parsing.ParseFeed;
 import processing.core.PApplet;
 
@@ -42,6 +44,7 @@ public class EarthquakeCityMap extends PApplet {
 	
 	//feed with magnitude 2.5+ Earthquakes
 	private String earthquakesURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
+	// private String earthquakesURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.atom";
 	
 	// The files containing city names and info and country names and info
 	private String cityFile = "city-data.json";
@@ -70,35 +73,35 @@ public class EarthquakeCityMap extends PApplet {
 		    earthquakesURL = "2.5_week.atom";  // The same feed, but saved August 7, 2015
 		}
 		else {
-			map = new UnfoldingMap(this, 200, 50, 650, 600, new Google.GoogleMapProvider());
+			map = new UnfoldingMap(this, 200, 50, 650, 600, new Microsoft.HybridProvider());
 			// IF YOU WANT TO TEST WITH A LOCAL FILE, uncomment the next line
 		    //earthquakesURL = "2.5_week.atom";
 		}
 		MapUtils.createDefaultEventDispatcher(this, map);
 		
-		
-		// (2) Reading in earthquake data and geometric properties
-	    //     STEP 1: load country features and markers
+		// Reading in earthquake data and geometric properties
+	    // Load country features and add in the markers
 		List<Feature> countries = GeoJSONReader.loadData(this, countryFile);
 		countryMarkers = MapUtils.createSimpleMarkers(countries);
 		
-		//     STEP 2: read in city data
+		// Load city features and add in the markers
 		List<Feature> cities = GeoJSONReader.loadData(this, cityFile);
 		cityMarkers = new ArrayList<Marker>();
 		for(Feature city : cities) {
 		  cityMarkers.add(new CityMarker(city));
 		}
 	    
-		//     STEP 3: read in earthquake RSS feed
+		// Load earthquake features
 	    List<PointFeature> earthquakes = ParseFeed.parseEarthquake(this, earthquakesURL);
 	    quakeMarkers = new ArrayList<Marker>();
 	    
+	    // Add the earthquakes into the marker list
 	    for(PointFeature feature : earthquakes) {
-		  //check if LandQuake
+		  //Check if LandQuake
 		  if(isLand(feature)) {
 		    quakeMarkers.add(new LandQuakeMarker(feature));
 		  }
-		  // OceanQuakes
+		  // Or OceanQuakes
 		  else {
 		    quakeMarkers.add(new OceanQuakeMarker(feature));
 		  }
@@ -107,33 +110,24 @@ public class EarthquakeCityMap extends PApplet {
 	    // could be used for debugging
 	    printQuakes();
 	 		
-	    // (3) Add markers to map
-	    //     NOTE: Country markers are not added to the map.  They are used
-	    //           for their geometric properties
+	    // Add all markers to map
 	    map.addMarkers(quakeMarkers);
 	    map.addMarkers(cityMarkers);
-	    
-	}  // End setup
-	
+	}
 	
 	public void draw() {
 		background(0);
 		map.draw();
-		addKey();
-		
+		addKey();	
 	}
 	
-	/** Event handler that gets called automatically when the 
-	 * mouse moves.
-	 */
+	// Event handler that gets called automatically when the mouse moves
 	@Override
-	public void mouseMoved()
-	{
-		// clear the last selection
+	public void mouseMoved() {
+		// Clear the last selection
 		if (lastSelected != null) {
 			lastSelected.setSelected(false);
 			lastSelected = null;
-		
 		}
 		selectMarkerIfHover(quakeMarkers);
 		selectMarkerIfHover(cityMarkers);
@@ -142,10 +136,17 @@ public class EarthquakeCityMap extends PApplet {
 	// If there is a marker under the cursor, and lastSelected is null 
 	// set the lastSelected to be the first marker found under the cursor
 	// Make sure you do not select two markers.
-	// 
-	private void selectMarkerIfHover(List<Marker> markers)
-	{
+	private void selectMarkerIfHover(List<Marker> markers) {
 		// TODO: Implement this method
+		if (lastSelected == null) {
+			for (Marker m : markers) {
+				if (m.isInside(map, mouseX, mouseY)) {
+					lastSelected = (CommonMarker) m;
+					lastSelected.setSelected(true);
+					break;
+				}
+			}
+		}
 	}
 	
 	/** The event handler for mouse clicks
@@ -154,20 +155,74 @@ public class EarthquakeCityMap extends PApplet {
 	 * where the city is in the threat circle
 	 */
 	@Override
-	public void mouseClicked()
-	{
+	public void mouseClicked() {
 		// TODO: Implement this method
-		// Hint: You probably want a helper method or two to keep this code
-		// from getting too long/disorganized
+		if (lastClicked != null) {
+			lastClicked.setClicked(false);
+			lastClicked = null;
+			unhideMarkers();
+		} else {
+			selectMarkerIfClicked(quakeMarkers);
+			selectMarkerIfClicked(cityMarkers);
+			hideMarkers();
+		}
 	}
 	
+	// If there is a marker clicked, and lastClicked is null 
+	// set the lastClicked to be the first marker clicked
+	// Make sure you do not select two markers.
+	private void selectMarkerIfClicked(List<Marker> markers) {
+		// TODO: Implement this method
+		if (lastClicked == null) {
+			for (Marker m : markers) {
+				if (m.isInside(map, mouseX, mouseY)) {
+					lastClicked = (CommonMarker) m;
+					lastClicked.setClicked(true);
+					break;
+				}
+			}
+		}
+	}
 	
-	// loop over and unhide all markers
+	// Loop over and hide unrelated markers
+	private void hideMarkers() {
+		if (lastClicked instanceof OceanQuakeMarker) {
+			((OceanQuakeMarker) lastClicked).impactedCities = new ArrayList<ScreenPosition>();
+		}
+		if (lastClicked instanceof CityMarker) {
+			for (Marker marker : quakeMarkers) {
+				double threatCircle = ((EarthquakeMarker) marker).threatCircle();
+				if (marker.getDistanceTo(lastClicked.getLocation()) >  threatCircle) {
+					marker.setHidden(true);
+				}
+			}
+			for (Marker marker : cityMarkers) {
+				marker.setHidden(true);
+			}
+		} else {
+			for (Marker marker : cityMarkers) {
+				double threatCircle = ((EarthquakeMarker) lastClicked).threatCircle();
+				if (marker.getDistanceTo(lastClicked.getLocation()) >  threatCircle) {
+					marker.setHidden(true);
+					} else {
+						if (lastClicked instanceof OceanQuakeMarker) {
+							ScreenPosition sp = ((CityMarker) marker).getScreenPosition(map);
+							((OceanQuakeMarker) lastClicked).impactedCities.add(sp);
+						}
+					}
+			}
+			for (Marker marker : quakeMarkers) {
+				marker.setHidden(true);
+			}
+		}
+		lastClicked.setHidden(false);
+	}
+	
+	// Loop over and unhide all markers
 	private void unhideMarkers() {
 		for(Marker marker : quakeMarkers) {
 			marker.setHidden(false);
-		}
-			
+		}	
 		for(Marker marker : cityMarkers) {
 			marker.setHidden(false);
 		}
@@ -191,9 +246,9 @@ public class EarthquakeCityMap extends PApplet {
 		fill(150, 30, 30);
 		int tri_xbase = xbase + 35;
 		int tri_ybase = ybase + 50;
-		triangle(tri_xbase, tri_ybase-CityMarker.TRI_SIZE, tri_xbase-CityMarker.TRI_SIZE, 
-				tri_ybase+CityMarker.TRI_SIZE, tri_xbase+CityMarker.TRI_SIZE, 
-				tri_ybase+CityMarker.TRI_SIZE);
+		triangle(tri_xbase - CityMarker.TRI_SIZE / 2 * (float) Math.sqrt(3), tri_ybase + CityMarker.TRI_SIZE / 2, 
+				tri_xbase + CityMarker.TRI_SIZE / 2 * (float) Math.sqrt(3), tri_ybase + CityMarker.TRI_SIZE / 2, 
+				tri_xbase, tri_ybase - CityMarker.TRI_SIZE);
 
 		fill(0, 0, 0);
 		textAlign(LEFT, CENTER);
@@ -232,31 +287,25 @@ public class EarthquakeCityMap extends PApplet {
 
 		strokeWeight(2);
 		line(centerx-8, centery-8, centerx+8, centery+8);
-		line(centerx-8, centery+8, centerx+8, centery-8);
-			
+		line(centerx-8, centery+8, centerx+8, centery-8);	
 	}
-
 	
-	
-	// Checks whether this quake occurred on land.  If it did, it sets the 
-	// "country" property of its PointFeature to the country where it occurred
-	// and returns true.  Notice that the helper method isInCountry will
-	// set this "country" property already.  Otherwise it returns false.	
+	// Helper method to check if the earthquake is on land or under sea
+	// If on land, it sets the "country" property to the country where it occurred
+	// and returns true. Otherwise it returns false.
+	// The helper method isInCountry set the "country" property already if true.  
 	private boolean isLand(PointFeature earthquake) {
-		
-		// IMPLEMENT THIS: loop over all countries to check if location is in any of them
-		// If it is, add 1 to the entry in countryQuakes corresponding to this country.
+		// If isInCountry ever returns true, isLand should return true.
 		for (Marker country : countryMarkers) {
 			if (isInCountry(earthquake, country)) {
 				return true;
 			}
 		}
-		
-		// not inside any country
+		// If not inside any country
 		return false;
 	}
 	
-	// prints countries with number of earthquakes
+	// Helper method to print number of earthquakes within all countries and oceans
 	private void printQuakes() {
 		int totalWaterQuakes = quakeMarkers.size();
 		for (Marker country : countryMarkers) {
@@ -279,40 +328,36 @@ public class EarthquakeCityMap extends PApplet {
 		System.out.println("OCEAN QUAKES: " + totalWaterQuakes);
 	}
 	
-	
-	
-	// helper method to test whether a given earthquake is in a given country
-	// This will also add the country property to the properties of the earthquake feature if 
-	// it's in one of the countries.
+	// Helper method to test whether a given earthquake is in a given country
+	// This will also add the country property to the properties of the earthquake 
+	// feature if it's in one of the countries.
 	// You should not have to modify this code
 	private boolean isInCountry(PointFeature earthquake, Marker country) {
 		// getting location of feature
 		Location checkLoc = earthquake.getLocation();
-
 		// some countries represented it as MultiMarker
 		// looping over SimplePolygonMarkers which make them up to use isInsideByLoc
 		if(country.getClass() == MultiMarker.class) {
-				
 			// looping over markers making up MultiMarker
-			for(Marker marker : ((MultiMarker)country).getMarkers()) {
-					
+			for(Marker marker : ((MultiMarker)country).getMarkers()) {	
 				// checking if inside
 				if(((AbstractShapeMarker)marker).isInsideByLocation(checkLoc)) {
 					earthquake.addProperty("country", country.getProperty("name"));
-						
 					// return if is inside one
 					return true;
 				}
 			}
-		}
-			
+		}	
 		// check if inside country represented by SimplePolygonMarker
 		else if(((AbstractShapeMarker)country).isInsideByLocation(checkLoc)) {
 			earthquake.addProperty("country", country.getProperty("name"));
-			
 			return true;
 		}
 		return false;
 	}
-
+	
+	// Get the cityMarkers
+	public List<Marker> getCityMarkers() {
+		return cityMarkers;
+	}
 }
