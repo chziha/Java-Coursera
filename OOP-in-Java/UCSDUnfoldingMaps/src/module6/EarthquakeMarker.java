@@ -10,9 +10,7 @@ import processing.core.PGraphics;
  *
  */
 // TODO: Implement the comparable interface
-public abstract class EarthquakeMarker extends CommonMarker
-{
-	
+public abstract class EarthquakeMarker extends CommonMarker implements Comparable<EarthquakeMarker> {
 	// Did the earthquake occur on land?  This will be set by the subclasses.
 	protected boolean isOnLand;
 
@@ -21,7 +19,6 @@ public abstract class EarthquakeMarker extends CommonMarker
 	// using the thresholds below, or a continuous function
 	// based on magnitude. 
 	protected float radius;
-	
 	
 	// constants for distance
 	protected static final float kmPerMile = 1.6f;
@@ -36,9 +33,6 @@ public abstract class EarthquakeMarker extends CommonMarker
 	/** Greater than or equal to this threshold is a deep depth */
 	public static final float THRESHOLD_DEEP = 300;
 
-	// ADD constants for colors
-
-	
 	// abstract method implemented in derived classes
 	public abstract void drawEarthquake(PGraphics pg, float x, float y);
 		
@@ -56,8 +50,12 @@ public abstract class EarthquakeMarker extends CommonMarker
 	}
 	
 	// TODO: Add the method:
-	// public int compareTo(EarthquakeMarker marker)
-	
+	// abstract method implemented in Comparable class
+		public int compareTo(EarthquakeMarker otherEM) {
+			Float thisMag = this.getMagnitude();
+			Float otherMag = otherEM.getMagnitude();
+			return otherMag.compareTo(thisMag);
+		}
 	
 	// calls abstract method drawEarthquake and then checks age and draws X if needed
 	@Override
@@ -90,7 +88,6 @@ public abstract class EarthquakeMarker extends CommonMarker
 		
 		// reset to previous styling
 		pg.popStyle();
-		
 	}
 
 	/** Show the title of the earthquake if this marker is selected */
@@ -109,11 +106,9 @@ public abstract class EarthquakeMarker extends CommonMarker
 		pg.fill(0);
 		pg.text(title, x + 3 , y +18);
 		
-		
 		pg.popStyle();
 		
 	}
-
 	
 	/**
 	 * Return the "threat circle" radius, or distance up to 
@@ -144,14 +139,14 @@ public abstract class EarthquakeMarker extends CommonMarker
 		}
 	}
 	
-	
 	/** toString
 	 * Returns an earthquake marker's string representation
 	 * @return the string representation of an earthquake marker.
 	 */
-	public String toString()
-	{
-		return getTitle();
+	
+	// toString
+	public String toString() {
+		return (getTitle() + ", Magnitude: " + getMagnitude());
 	}
 	/*
 	 * getters for earthquake properties
@@ -178,8 +173,4 @@ public abstract class EarthquakeMarker extends CommonMarker
 	{
 		return isOnLand;
 	}
-	
-
-	
-	
 }
