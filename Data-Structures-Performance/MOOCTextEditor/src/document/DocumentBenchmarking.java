@@ -11,10 +11,7 @@ import java.io.InputStreamReader;
  */
 
 public class DocumentBenchmarking {
-
-	
 	public static void main(String [] args) {
-
 	    // Run each test more than once to get bigger numbers and less noise.
 	    // You can try playing around with this number.
 	    int trials = 100;
@@ -38,8 +35,7 @@ public class DocumentBenchmarking {
 		// and prints out timing results as described in the assignment 
 		// instructions and following the pseudocode below.
 		for (int numToCheck = start; numToCheck < numSteps*increment + start; 
-				numToCheck += increment)
-		{
+				numToCheck += increment) {
 			// numToCheck holds the number of characters that you should read from the 
 			// file to create both a BasicDocument and an EfficientDocument.  
 			
@@ -57,10 +53,27 @@ public class DocumentBenchmarking {
 			 *     b. Calls fleshScore on this document
 			 * 6. Print out the time it took to complete the loop in step 5 
 			 *      (on the same line as the first print statement) followed by a newline (\n) 
-			 */  
-			 
+			 */
+			System.out.print(numToCheck + "\t");
+			String text = getStringFromFile(textfile, numToCheck);
+			long startTime1 = System.nanoTime();
+			for (int i = 0; i < trials; i ++) {
+				BasicDocument doc = new BasicDocument(text);
+				doc.getFleschScore();
+			}
+			long endTime1 = System.nanoTime();
+			double elapsedTime1 = (endTime1 - startTime1) / 1000000000.0;
+			System.out.print(elapsedTime1 + "\t");
+			
+			long startTime2 = System.nanoTime();
+			for (int i = 0; i < trials; i ++) {
+				EfficientDocument doc = new EfficientDocument(text);
+				doc.getFleschScore();
+			}
+			long endTime2 = System.nanoTime();
+			double elapsedTime2 = (endTime2 - startTime2) / 1000000000.0;
+			System.out.print(elapsedTime2 + "\n");
 		}
-	
 	}
 	
 	/** Get a specified number of characters from a text file
@@ -70,7 +83,6 @@ public class DocumentBenchmarking {
 	 * @return The text string from the file with the appropriate number of characters
 	 */
 	public static String getStringFromFile(String filename, int numChars) {
-		
 		StringBuffer s = new StringBuffer();
 		try {
 			FileInputStream inputFile= new FileInputStream(filename);
@@ -91,9 +103,7 @@ public class DocumentBenchmarking {
 		{
 		  System.out.println(e);
 		  System.exit(0);
-		}
-		
-		
+		}	
 		return s.toString();
 	}
 	

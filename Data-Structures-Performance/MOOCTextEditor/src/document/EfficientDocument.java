@@ -15,12 +15,10 @@ public class EfficientDocument extends Document {
 	private int numSentences;  // The number of sentences in the document
 	private int numSyllables;  // The number of syllables in the document
 	
-	public EfficientDocument(String text)
-	{
+	public EfficientDocument(String text) {
 		super(text);
 		processText();
 	}
-	
 	
 	/** 
 	 * Take a string that either contains only alphabetic characters,
@@ -31,32 +29,42 @@ public class EfficientDocument extends Document {
 	 * @param tok The string to check
 	 * @return true if tok is a word, false if it is punctuation. 
 	 */
-	private boolean isWord(String tok)
-	{
+	private boolean isWord(String tok) {
 	    // Note: This is a fast way of checking whether a string is a word
 	    // You probably don't want to change it.
 		return !(tok.indexOf("!") >=0 || tok.indexOf(".") >=0 || tok.indexOf("?")>=0);
 	}
 	
-	
     /** Passes through the text one time to count the number of words, syllables 
      * and sentences, and set the member variables appropriately.
      * Words, sentences and syllables are defined as described below. 
      */
-	private void processText()
-	{
+	private void processText() {
 		// Call getTokens on the text to preserve separate strings that are 
-		// either words or sentence-ending punctuation.  Ignore everything
+		// either words or sentence-ending punctuation. Ignore everything
 		// That is not a word or a sentence-ending puctuation.
 		// MAKE SURE YOU UNDERSTAND THIS LINE BEFORE YOU CODE THE REST
 		// OF THIS METHOD.
 		List<String> tokens = getTokens("[!?.]+|[a-zA-Z]+");
 		
-		// TODO: Finish this method.  Remember the countSyllables method from 
-		// Document.  That will come in handy here.  isWord defined above will also help.
+		// TODO: Finish this method. isWord defined above will also help.
+		numWords = 0;
+		numSentences = 0;
+		numSyllables = 0;
+		
+		for (String token : tokens) {
+			if(isWord(token)) {
+				numWords++;
+				numSyllables += countSyllables(token);
+			} else {
+				numSentences++;
+			}
+		}
+		if (tokens.size() > 0 && isWord(tokens.get(tokens.size() - 1))) {
+			numSentences++; 
+		}
 	}
 
-	
 	/**
 	 * Get the number of sentences in the document.
 	 * Sentences are defined as contiguous strings of characters ending in an 
@@ -73,9 +81,8 @@ public class EfficientDocument extends Document {
 	@Override
 	public int getNumSentences() {
 		//TODO: write this method.  Hint: It's simple
-		return 0;
+		return numSentences;
 	}
-
 	
 	/**
 	 * Get the number of words in the document.
@@ -94,9 +101,8 @@ public class EfficientDocument extends Document {
 	@Override
 	public int getNumWords() {
 		//TODO: write this method.  Hint: It's simple
-	    return 0;
+	    return numWords;
 	}
-
 
 	/**
 	 * Get the total number of syllables in the document (the stored text). 
@@ -116,13 +122,12 @@ public class EfficientDocument extends Document {
 	@Override
 	public int getNumSyllables() {
         //TODO: write this method.  Hint: It's simple
-        return 0;
+        return numSyllables;
 	}
 	
 	// Can be used for testing
 	// We encourage you to add your own tests here.
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 	    testCase(new EfficientDocument("This is a test.  How many???  "
                 + "Senteeeeeeeeeences are here... there should be 5!  Right?"),
                 16, 13, 5);
@@ -141,6 +146,4 @@ public class EfficientDocument extends Document {
 		         32, 15, 1);
 		
 	}
-	
-
 }
