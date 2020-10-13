@@ -1,9 +1,12 @@
 package textgen;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** 
  * An implementation of the MTG interface that uses a list of lists.
@@ -20,19 +23,42 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	// The random number generator
 	private Random rnGenerator;
 	
-	public MarkovTextGeneratorLoL(Random generator)
-	{
+	public MarkovTextGeneratorLoL(Random generator) {
 		wordList = new LinkedList<ListNode>();
 		starter = "";
 		rnGenerator = generator;
 	}
 	
-	
 	/** Train the generator by adding the sourceText */
 	@Override
-	public void train(String sourceText)
-	{
+	public void train(String sourceText) {
 		// TODO: Implement this method
+		if (sourceText.length() < 1) {
+			System.out.println("The text is not long enough.");
+		} else {
+			String[] words = sourceText.split("[\\s]+");
+			// List<String> words = getTokens("[!?.]+|[a-zA-Z]+", sourceText);
+			starter = words[0];
+			String prevWord = starter;
+			String nextWord = "";
+			ListNode node;
+			for (int i = 1; i <= words.length; i++) {
+				if (i == words.length) {
+					nextWord = starter;
+				} else {
+					nextWord = words[i];
+				}
+				node = getNode(prevWord);
+				if (node == null) {
+					node = new ListNode(prevWord);
+					node.addNextWord(nextWord);
+					wordList.add(node);
+				} else {
+					node.addNextWord(nextWord);
+				}
+				prevWord = nextWord;
+			}
+		}
 	}
 	
 	/** 
@@ -41,17 +67,32 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	@Override
 	public String generateText(int numWords) {
 	    // TODO: Implement this method
-		return null;
+		String output = "";
+		if (wordList.isEmpty()) {
+			System.out.println("Not Well Trained");
+			return output;
+		}
+		if (numWords == 0) {
+			return output;
+		}
+		String currWord = starter;
+		output += currWord;
+		int count = 1;
+		while (count < numWords) {
+			ListNode node = getNode(currWord);
+			String nextWord = node.getRandomNextWord(rnGenerator);
+			output = output + " " + nextWord;
+			currWord = nextWord;
+			count++;
+		}
+		return output;
 	}
-	
 	
 	// Can be helpful for debugging
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		String toReturn = "";
-		for (ListNode n : wordList)
-		{
+		for (ListNode n : wordList) {
 			toReturn += n.toString();
 		}
 		return toReturn;
@@ -59,21 +100,41 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	
 	/** Retrain the generator from scratch on the source text */
 	@Override
-	public void retrain(String sourceText)
-	{
+	public void retrain(String sourceText) {
 		// TODO: Implement this method.
+		wordList = new LinkedList<ListNode>();
+		train(sourceText);
 	}
 	
 	// TODO: Add any private helper methods you need here.
+	// Method to extract all words into a list
+	private List<String> getTokens(String pattern, String text) {
+		ArrayList<String> tokens = new ArrayList<String>();
+		Pattern tokSplitter = Pattern.compile(pattern);
+		Matcher m = tokSplitter.matcher(text);
+		
+		while (m.find()) {
+			tokens.add(m.group());
+		}
+		return tokens;
+	}
 	
+	// Method to return the ListNode that contains the given word
+	private ListNode getNode(String word) {
+		for (ListNode node : wordList) {
+			if (word.equals(node.getWord())) {
+				return node;
+			}
+		}
+		return null;
+	}
 	
 	/**
 	 * This is a minimal set of tests.  Note that it can be difficult
 	 * to test methods/classes with randomized behavior.   
 	 * @param args
 	 */
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		// feed the generator a fixed random value for repeatable behavior
 		MarkovTextGeneratorLoL gen = new MarkovTextGeneratorLoL(new Random(42));
 		String textString = "Hello.  Hello there.  This is a test.  Hello there.  Hello Bob.  Test again.";
@@ -110,45 +171,40 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 		System.out.println(gen);
 		System.out.println(gen.generateText(20));
 	}
-
 }
 
 /** Links a word to the next words in the list 
  * You should use this class in your implementation. */
-class ListNode
-{
+class ListNode {
     // The word that is linking to the next words
 	private String word;
 	
 	// The next words that could follow it
 	private List<String> nextWords;
 	
-	ListNode(String word)
-	{
+	ListNode(String word) {
 		this.word = word;
 		nextWords = new LinkedList<String>();
 	}
 	
-	public String getWord()
-	{
+	public String getWord() {
 		return word;
 	}
 
-	public void addNextWord(String nextWord)
-	{
+	public void addNextWord(String nextWord) {
 		nextWords.add(nextWord);
 	}
 	
-	public String getRandomNextWord(Random generator)
-	{
+	public String getRandomNextWord(Random generator) {
 		// TODO: Implement this method
 	    // The random number generator should be passed from 
 	    // the MarkovTextGeneratorLoL class
-	    return null;
+		int range = nextWords.size();
+		int idx = generator.nextInt(range);
+	    return nextWords.get(idx);
 	}
 
-	public String toString()
-	{
+	public String toString() {
 		String toReturn = word + ": ";
 		for (String s : nextWords) {
 			toReturn += s + "->";
@@ -156,7 +212,4 @@ class ListNode
 		toReturn += "\n";
 		return toReturn;
 	}
-	
 }
-
-
