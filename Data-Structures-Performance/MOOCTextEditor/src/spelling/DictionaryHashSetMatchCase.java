@@ -11,10 +11,10 @@ import java.util.Scanner;
 /**
  * A class that implements the Dictionary interface with a HashSet
  */
-public class DictionaryHashSet implements Dictionary {
+public class DictionaryHashSetMatchCase implements Dictionary {
     private HashSet<String> words;
 	
-	public DictionaryHashSet() {
+	public DictionaryHashSetMatchCase() {
 	    words = new HashSet<String>();
 	}
 	
